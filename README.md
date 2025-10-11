@@ -5,16 +5,38 @@
 
 <h1 align="center">SongFormer: Scaling Music Structure Analysis with Heterogeneous Supervision</h1>
 
-![Python](https://img.shields.io/badge/Python-3.10-brightgreen)
-![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightblue)
-[![arXiv Paper](https://img.shields.io/badge/arXiv-2510.02797-blue)](https://arxiv.org/abs/2510.02797)
-[![GitHub](https://img.shields.io/badge/GitHub-SongFormer-black)](https://github.com/ASLP-lab/SongFormer)
-[![HuggingFace Space](https://img.shields.io/badge/HuggingFace-space-yellow)](https://huggingface.co/spaces/ASLP-lab/SongFormer)
-[![HuggingFace Model](https://img.shields.io/badge/HuggingFace-model-blue)](https://huggingface.co/ASLP-lab/SongFormer)
-[![Dataset SongFormDB](https://img.shields.io/badge/HF%20Dataset-SongFormDB-green)](https://huggingface.co/datasets/ASLP-lab/SongFormDB)
-[![Dataset SongFormBench](https://img.shields.io/badge/HF%20Dataset-SongFormBench-orange)](https://huggingface.co/datasets/ASLP-lab/SongFormBench)
-[![Discord](https://img.shields.io/badge/Discord-join%20us-purple?logo=discord&logoColor=white)](https://discord.gg/p5uBryC4Zs)
-[![lab](https://img.shields.io/badge/🏫-ASLP-grey?labelColor=lightgrey)](http://www.npu-aslp.org/)
+<div align="center">
+
+<div style="text-align: center;">
+  <img src="https://pfst.cf2.poecdn.net/base/image/3edb451ba5a7f21a2883ff2daef0815c5bd5c7551700754d7b1416894aa4213a?pmaid=486214493" alt="Python">  
+  <img src="https://pfst.cf2.poecdn.net/base/image/7c8950244a7e0fa562345fadba0b80f7f2c516aa9b5b4b3440e0543b5ae357fe?pmaid=486214490" alt="License">  
+  <a href="https://arxiv.org/abs/2510.02797">
+    <img src="https://pfst.cf2.poecdn.net/base/image/cfca907eb1c2792af5128a680b48a47bdb0ceb1d1bdea83daff70d1cc34bb10b?pmaid=486214495" alt="arXiv Paper">
+  </a>
+  <a href="https://github.com/ASLP-lab/SongFormer">
+    <img src="https://pfst.cf2.poecdn.net/base/image/7245776690a7a9de76e20f487a1002303b67d43ba6e815707ef5aa0ca460b8c3?pmaid=486214489" alt="GitHub">
+  </a>
+  <a href="https://huggingface.co/spaces/ASLP-lab/SongFormer">
+    <img src="https://pfst.cf2.poecdn.net/base/image/f52d68641dacda8ce41acd49518acc697ea2f08070e6726aaa8160b48838c785?pmaid=486214498" alt="HuggingFace Space">
+  </a>
+  <a href="https://huggingface.co/ASLP-lab/SongFormer">
+    <img src="https://pfst.cf2.poecdn.net/base/image/6211cc78bac4cc37aaa886fa6335032e7aedb5de092b32557b1b4324a1da4dd8?pmaid=486214494" alt="HuggingFace Model">
+  </a>
+  <a href="https://huggingface.co/datasets/ASLP-lab/SongFormDB">
+    <img src="https://pfst.cf2.poecdn.net/base/image/b4b527bba20f316becb731bfa05c26502d726ab97121619afc4c7d359d3596e0?pmaid=486214496" alt="Dataset SongFormDB">
+  </a>
+  <a href="https://huggingface.co/datasets/ASLP-lab/SongFormBench">
+    <img src="https://pfst.cf2.poecdn.net/base/image/21545a56eb4b744383845625bc365964ac071275f36bee985ba563fda55fe28f?pmaid=486214492" alt="Dataset SongFormBench">
+  </a>
+  <a href="https://discord.gg/p5uBryC4Zs">
+    <img src="https://pfst.cf2.poecdn.net/base/image/f82a8fe87ee99b3aa4a5198683a37c0e44a62b8e9eca8a8f64b0590293a8cf12?pmaid=486214491" alt="Discord">
+  </a>
+  <a href="http://www.npu-aslp.org/">
+    <img src="https://img.shields.io/badge/🏫-ASLP-grey?labelColor=lightgrey" alt="lab">
+  </a>
+</div>
+
+</div>
 
 <div align="center">
   <h3>
