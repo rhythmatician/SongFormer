@@ -1,6 +1,8 @@
 # This file contains code adapted from the following sources:
 # [MIT license] https://github.com/mir-aidj/all-in-one/blob/main/src/allin1/postprocessing/functional.py
 
+import os
+import json
 import numpy as np
 import torch
 from .helpers import (
@@ -21,14 +23,17 @@ def event_frames_to_time(frame_rates, boundary: np.array):
 def postprocess_functional_structure(
     logits,
     config,
+    save_probs: bool = False,
+    out_path: str = None,
+    item_name: str = None,
 ):
     # pdb.set_trace()
     boundary_logits = logits["boundary_logits"]
     function_logits = logits["function_logits"]
 
-    assert boundary_logits.shape[0] == 1 and function_logits.shape[0] == 1, (
-        "Only batch size 1 is supported"
-    )
+    assert (
+        boundary_logits.shape[0] == 1 and function_logits.shape[0] == 1
+    ), "Only batch size 1 is supported"
     raw_prob_sections = torch.sigmoid(boundary_logits[0])
     raw_prob_functions = torch.softmax(function_logits[0].transpose(0, 1), dim=0)
 
@@ -60,6 +65,25 @@ def postprocess_functional_structure(
     pred_boundary_indices = np.flatnonzero(boundary)
     pred_boundary_indices = pred_boundary_indices[pred_boundary_indices > 0]
     prob_segment_function = np.split(prob_functions, pred_boundary_indices, axis=1)
+
+    # Optionally save per-segment class probabilities (top-3) for inspection
+    if save_probs and out_path and item_name:
+        probs_output = []
+        for (start, end), p in zip(pred_boundaries, prob_segment_function):
+            mean_probs = p.mean(axis=1)
+            topk_idx = mean_probs.argsort()[-3:][::-1]
+            topk = [
+                {"label": ID_TO_LABEL[int(i)], "prob": float(mean_probs[int(i)])}
+                for i in topk_idx
+            ]
+            probs_output.append(
+                {"start": float(start), "end": float(end), "topk": topk}
+            )
+        with open(
+            os.path.join(out_path, f"{item_name}_probs.json"), "w", encoding="utf-8"
+        ) as f:
+            json.dump(probs_output, f, indent=2, ensure_ascii=False)
+
     pred_labels = [p.mean(axis=1).argmax().item() for p in prob_segment_function]
 
     segments: MsaInfo = []

@@ -317,7 +317,13 @@ def inference(rank, queue_input: mp.Queue, queue_output: mp.Queue, args):
                     logits["boundary_logits"][:lens]
                 ).unsqueeze(0)
 
-                msa_infer_output = postprocess_functional_structure(logits, hp)
+                msa_infer_output = postprocess_functional_structure(
+                    logits,
+                    hp,
+                    save_probs=args.save_probs,
+                    out_path=args.output_dir,
+                    item_name=Path(item).stem,
+                )
 
                 assert msa_infer_output[-1][-1] == "end"
                 if not args.no_rule_post_processing:
@@ -380,6 +386,7 @@ def main(args):
         checkpoint=args.checkpoint,
         config_path=args.config_path,
         no_rule_post_processing=args.no_rule_post_processing,
+        save_probs=args.save_probs,
     )
 
     processes = []
@@ -445,6 +452,11 @@ if __name__ == "__main__":
         help="Disable rule-based post-processing",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument(
+        "--save_probs",
+        action="store_true",
+        help="Save per-segment class probabilities to a JSON file",
+    )
 
     args = parser.parse_args()
 
