@@ -22,6 +22,7 @@ pandas==2.2.3
 librosa==0.11.0
 audioread==3.0.1
 soundfile==0.13.1
+sounddevice==0.5.1  # For real-time audio capture
 pesq==0.0.4
 auraloss==0.4.0
 nnAudio==0.3.3
