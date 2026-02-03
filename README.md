@@ -197,11 +197,32 @@ md5sum ckpts/SongFormer.safetensors
 
 ## Inference
 
-### 1. One-Click Inference with HuggingFace Space
+### 1. Real-time Inference (NEW!)
+
+SongFormer now supports **real-time inference** from microphone input! Analyze music structure as it's being played or performed.
+
+Detailed real-time inference instructions will be provided in future documentation updates.
+
+Quick start:
+```bash
+# Install additional dependency
+pip install sounddevice
+
+# Test your setup
+python test_realtime_setup.py
+
+# List audio devices
+python realtime_inference.py --list-devices
+
+# Start real-time analysis
+python realtime_inference.py --device 0
+```
+
+### 2. One-Click Inference with HuggingFace Space
 
 Available at: [https://huggingface.co/spaces/ASLP-lab/SongFormer](https://huggingface.co/spaces/ASLP-lab/SongFormer)
 
-### 2. Gradio App
+### 3. Gradio App
 
 First, change directory to the project root directory and activate the environment:
 
@@ -228,7 +249,7 @@ And for users in mainland China, you may need `export HF_ENDPOINT=https://hf-mir
 python app.py
 ```
 
-### 3. Python Code
+### 4. Python Code
 
 You can refer to the file `src/SongFormer/infer/infer.py`. The corresponding execution script is located at `src/SongFormer/infer.sh`. This is a ready-to-use, single-machine, multi-process annotation script.
 
