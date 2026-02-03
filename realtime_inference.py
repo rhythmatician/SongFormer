@@ -66,7 +66,7 @@ class RealtimeAnalyzer:
         self.audio_buffer = deque(maxlen=INPUT_SAMPLING_RATE * TIME_DUR)
         self.audio_queue = queue.Queue()
         self.running = False
-        
+
         # Thread locks for synchronization
         self.buffer_lock = threading.Lock()
         self.results_lock = threading.Lock()
@@ -153,7 +153,7 @@ class RealtimeAnalyzer:
 
             # Convert buffer to tensor
             audio_array = np.array(self.audio_buffer)
-        
+
         audio = torch.tensor(audio_array, dtype=torch.float32).to(self.device)
 
         # Analyze the audio segment

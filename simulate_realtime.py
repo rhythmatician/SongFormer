@@ -275,7 +275,7 @@ def main():
 
         # Convert audio file path to absolute path before changing directory
         audio_file = os.path.abspath(args.audio_file)
-        
+
         # Convert output path to absolute path if provided
         if args.output:
             output_path = os.path.abspath(args.output)
