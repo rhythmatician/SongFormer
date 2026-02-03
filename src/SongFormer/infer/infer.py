@@ -160,6 +160,12 @@ def inference(rank, queue_input: mp.Queue, queue_output: mp.Queue, args):
 
     model.to(device)
     model.eval()
+    logger.info(
+        f"process {rank} starting; save_logits="
+        f"{getattr(args, 'save_logits', False)} save_probs="
+        f"{getattr(args, 'save_probs', False)} output_dir="
+        f"{getattr(args, 'output_dir', '.')}"
+    )
 
     num_classes = args.num_classes
     dataset_id2label_mask = {}
@@ -317,16 +323,39 @@ def inference(rank, queue_input: mp.Queue, queue_output: mp.Queue, args):
                     logits["boundary_logits"][:lens]
                 ).unsqueeze(0)
 
+                # Optionally save raw logits (boundary + function) for analysis
+                if getattr(args, "save_logits", False):
+                    try:
+                        boundary_np = (
+                            logits["boundary_logits"].detach().cpu().numpy().squeeze()
+                        )
+                        function_np = (
+                            logits["function_logits"].detach().cpu().numpy().squeeze().T
+                        )
+                        # function_np shape will be (num_classes, frames)
+                        out_dir = getattr(args, "output_dir", ".")
+                        os.makedirs(out_dir, exist_ok=True)
+                        out_npz = os.path.join(out_dir, f"{Path(item).stem}_logits.npz")
+                        np.savez_compressed(
+                            out_npz,
+                            boundary_logits=boundary_np,
+                            function_logits=function_np,
+                            frame_rate=AFTER_DOWNSAMPLING_FRAME_RATES,
+                        )
+                        logger.info(f"Saved logits to {out_npz}")
+                    except Exception as e:
+                        logger.warning(f"Failed to save logits for {item}: {e}")
+
                 msa_infer_output = postprocess_functional_structure(
                     logits,
                     hp,
-                    save_probs=args.save_probs,
-                    out_path=args.output_dir,
+                    save_probs=getattr(args, "save_probs", False),
+                    out_path=getattr(args, "output_dir", "."),
                     item_name=Path(item).stem,
                 )
 
                 assert msa_infer_output[-1][-1] == "end"
-                if not args.no_rule_post_processing:
+                if not getattr(args, "no_rule_post_processing", False):
                     msa_infer_output = rule_post_processing(msa_infer_output)
                 msa_json = []
                 for idx in range(len(msa_infer_output) - 1):
@@ -337,9 +366,10 @@ def inference(rank, queue_input: mp.Queue, queue_output: mp.Queue, args):
                             "end": msa_infer_output[idx + 1][0],
                         }
                     )
+                out_dir = getattr(args, "output_dir", ".")
                 json.dump(
                     msa_json,
-                    open(os.path.join(args.output_dir, f"{Path(item).stem}.json"), "w"),
+                    open(os.path.join(out_dir, f"{Path(item).stem}.json"), "w"),
                     indent=4,
                     ensure_ascii=False,
                 )
@@ -385,8 +415,9 @@ def main(args):
         model=args.model,
         checkpoint=args.checkpoint,
         config_path=args.config_path,
-        no_rule_post_processing=args.no_rule_post_processing,
-        save_probs=args.save_probs,
+        no_rule_post_processing=getattr(args, "no_rule_post_processing", False),
+        save_probs=getattr(args, "save_probs", False),
+        save_logits=getattr(args, "save_logits", False),
     )
 
     processes = []
@@ -456,6 +487,11 @@ if __name__ == "__main__":
         "--save_probs",
         action="store_true",
         help="Save per-segment class probabilities to a JSON file",
+    )
+    parser.add_argument(
+        "--save_logits",
+        action="store_true",
+        help="Save boundary and function logits to a compressed .npz file",
     )
 
     args = parser.parse_args()
