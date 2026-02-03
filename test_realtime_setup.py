@@ -59,21 +59,24 @@ def test_audio_devices():
 
         devices = sd.query_devices()
 
-        input_devices = [d for d in devices if d["max_input_channels"] > 0]
+        # Find input devices
+        input_device_indices = [
+            i for i, d in enumerate(devices) if d["max_input_channels"] > 0
+        ]
 
-        if not input_devices:
+        if not input_device_indices:
             print("✗ No audio input devices found!")
             print("  Please connect a microphone or check your audio settings.")
             return False
 
-        print(f"✓ Found {len(input_devices)} audio input device(s):")
-        for i, device in enumerate(devices):
-            if device["max_input_channels"] > 0:
-                default_marker = (
-                    " (default)" if device == sd.query_devices(kind="input") else ""
-                )
-                print(f"  [{i}] {device['name']}{default_marker}")
-                print(f"      Sample rate: {device['default_samplerate']} Hz")
+        print(f"✓ Found {len(input_device_indices)} audio input device(s):")
+        for device_idx in input_device_indices:
+            device = devices[device_idx]
+            default_marker = (
+                " (default)" if device == sd.query_devices(kind="input") else ""
+            )
+            print(f"  [{device_idx}] {device['name']}{default_marker}")
+            print(f"      Sample rate: {device['default_samplerate']} Hz")
 
         return True
 

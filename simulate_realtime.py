@@ -11,9 +11,14 @@ import torch
 import librosa
 from pathlib import Path
 
-os.chdir(os.path.join("src", "SongFormer"))
-sys.path.append(os.path.join("..", "third_party"))
-sys.path.append(".")
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SONGFORMER_DIR = os.path.join(SCRIPT_DIR, "src", "SongFormer")
+
+# Change to SongFormer directory for model loading
+os.chdir(SONGFORMER_DIR)
+sys.path.append(os.path.join(SONGFORMER_DIR, "..", "third_party"))
+sys.path.append(SONGFORMER_DIR)
 
 # Monkey patch for msaf
 import scipy
@@ -32,13 +37,12 @@ from postprocessing.functional import postprocess_functional_structure
 # Constants
 MUSICFM_HOME_PATH = os.path.join("ckpts", "MusicFM")
 INPUT_SAMPLING_RATE = 24000
-
 DATASET_LABEL = "SongForm-HX-8Class"
 DATASET_IDS = [5]
 CHUNK_DURATION = 30  # Analyze in 30-second chunks
 
 
-def load_models(device):
+def load_models(device, model_name="SongFormer", config_path="SongFormer.yaml", checkpoint="SongFormer.safetensors"):
     """Load all required models"""
     print("Loading models...")
 
@@ -58,13 +62,13 @@ def load_models(device):
 
     # Load SongFormer
     print("  Loading SongFormer...")
-    module = importlib.import_module("models.SongFormer")
+    module = importlib.import_module(f"models.{model_name}")
     Model = getattr(module, "Model")
-    hp = OmegaConf.load(os.path.join("configs", "SongFormer.yaml"))
+    hp = OmegaConf.load(os.path.join("configs", config_path))
     msa_model = Model(hp)
 
     # Load checkpoint
-    checkpoint_path = os.path.join("ckpts", "SongFormer.safetensors")
+    checkpoint_path = os.path.join("ckpts", checkpoint)
     if checkpoint_path.endswith(".safetensors"):
         from safetensors.torch import load_file
 
@@ -256,12 +260,31 @@ def main():
             action="store_true",
             help="Don't simulate real-time delays (process as fast as possible)",
         )
+        parser.add_argument("--model", type=str, default="SongFormer", help="Model name")
+        parser.add_argument(
+            "--config", type=str, default="SongFormer.yaml", help="Config file"
+        )
+        parser.add_argument(
+            "--checkpoint",
+            type=str,
+            default="SongFormer.safetensors",
+            help="Checkpoint file",
+        )
 
         args = parser.parse_args()
 
+        # Convert audio file path to absolute path before changing directory
+        audio_file = os.path.abspath(args.audio_file)
+        
+        # Convert output path to absolute path if provided
+        if args.output:
+            output_path = os.path.abspath(args.output)
+        else:
+            output_path = None
+
         # Check if audio file exists
-        if not os.path.exists(args.audio_file):
-            print(f"Error: Audio file not found: {args.audio_file}")
+        if not os.path.exists(audio_file):
+            print(f"Error: Audio file not found: {audio_file}")
             return 1
 
         # Set device
@@ -269,7 +292,9 @@ def main():
         print(f"Using device: {device}\n")
 
         # Load models
-        muq_model, musicfm_model, msa_model, hp, label_mask = load_models(device)
+        muq_model, musicfm_model, msa_model, hp, label_mask = load_models(
+            device, args.model, args.config, args.checkpoint
+        )
 
         # Get label mask for dataset
         dataset_id = DATASET_LABEL_TO_DATASET_ID[DATASET_LABEL]
@@ -277,7 +302,7 @@ def main():
 
         # Analyze file
         results = stream_analyze_file(
-            args.audio_file,
+            audio_file,
             muq_model,
             musicfm_model,
             msa_model,
@@ -288,13 +313,14 @@ def main():
         )
 
         # Save results
-        if args.output:
-            output_path = args.output
+        if output_path:
+            final_output_path = output_path
         else:
-            base_name = Path(args.audio_file).stem
-            output_path = f"{base_name}_realtime_analysis.txt"
+            base_name = Path(audio_file).stem
+            # Save to script directory
+            final_output_path = os.path.join(SCRIPT_DIR, f"{base_name}_realtime_analysis.txt")
 
-        save_results(results, output_path)
+        save_results(results, final_output_path)
 
         print("\n" + "=" * 60)
         print("Analysis complete!")

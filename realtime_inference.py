@@ -9,14 +9,18 @@ import queue
 import threading
 import numpy as np
 import torch
-import librosa
 import sounddevice as sd
 from collections import deque
 from datetime import datetime
 
-os.chdir(os.path.join("src", "SongFormer"))
-sys.path.append(os.path.join("..", "third_party"))
-sys.path.append(".")
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SONGFORMER_DIR = os.path.join(SCRIPT_DIR, "src", "SongFormer")
+
+# Change to SongFormer directory for model loading
+os.chdir(SONGFORMER_DIR)
+sys.path.append(os.path.join(SONGFORMER_DIR, "..", "third_party"))
+sys.path.append(SONGFORMER_DIR)
 
 # Monkey patch for msaf
 import scipy
@@ -32,7 +36,6 @@ import importlib
 from dataset.label2id import (
     DATASET_ID_ALLOWED_LABEL_IDS,
     DATASET_LABEL_TO_DATASET_ID,
-
 )
 from postprocessing.functional import postprocess_functional_structure
 
@@ -63,6 +66,10 @@ class RealtimeAnalyzer:
         self.audio_buffer = deque(maxlen=INPUT_SAMPLING_RATE * TIME_DUR)
         self.audio_queue = queue.Queue()
         self.running = False
+        
+        # Thread locks for synchronization
+        self.buffer_lock = threading.Lock()
+        self.results_lock = threading.Lock()
 
         # Analysis state
         self.total_audio_received = 0
@@ -140,11 +147,13 @@ class RealtimeAnalyzer:
 
     def process_audio_buffer(self):
         """Process accumulated audio buffer"""
-        if len(self.audio_buffer) < INPUT_SAMPLING_RATE * ANALYSIS_WINDOW:
-            return None
+        with self.buffer_lock:
+            if len(self.audio_buffer) < INPUT_SAMPLING_RATE * ANALYSIS_WINDOW:
+                return None
 
-        # Convert buffer to tensor
-        audio_array = np.array(self.audio_buffer)
+            # Convert buffer to tensor
+            audio_array = np.array(self.audio_buffer)
+        
         audio = torch.tensor(audio_array, dtype=torch.float32).to(self.device)
 
         # Analyze the audio segment
@@ -242,9 +251,10 @@ class RealtimeAnalyzer:
                 # Get audio from queue
                 audio_chunk = self.audio_queue.get(timeout=0.1)
 
-                # Add to buffer
-                self.audio_buffer.extend(audio_chunk)
-                self.total_audio_received += len(audio_chunk)
+                # Add to buffer with lock
+                with self.buffer_lock:
+                    self.audio_buffer.extend(audio_chunk)
+                    self.total_audio_received += len(audio_chunk)
 
                 # Check if it's time to analyze
                 current_time = self.total_audio_received / INPUT_SAMPLING_RATE
@@ -256,8 +266,9 @@ class RealtimeAnalyzer:
                         time_offset = max(0, self.last_analysis_time)
                         segments = self.format_result(result, time_offset)
 
-                        # Update results
-                        self.analysis_results.extend(segments)
+                        # Update results with lock
+                        with self.results_lock:
+                            self.analysis_results.extend(segments)
                         self.print_results(segments)
 
                     self.last_analysis_time = current_time
@@ -310,8 +321,10 @@ class RealtimeAnalyzer:
         """Save analysis results to file"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"realtime_analysis_{timestamp}.txt"
+        # Save to script directory, not the changed working directory
+        output_path = os.path.join(SCRIPT_DIR, filename)
 
-        with open(filename, "w") as f:
+        with open(output_path, "w") as f:
             f.write("Real-time Music Structure Analysis Results\n")
             f.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(
@@ -320,10 +333,12 @@ class RealtimeAnalyzer:
             f.write("\nSegments:\n")
             f.write("=" * 60 + "\n")
 
-            for seg in self.analysis_results:
-                f.write(f"{seg['start']:6.1f}s - {seg['end']:6.1f}s : {seg['label']}\n")
+            # Read results with lock
+            with self.results_lock:
+                for seg in self.analysis_results:
+                    f.write(f"{seg['start']:6.1f}s - {seg['end']:6.1f}s : {seg['label']}\n")
 
-        print(f"\nResults saved to: {filename}")
+        print(f"\nResults saved to: {output_path}")
 
 
 def list_audio_devices():
