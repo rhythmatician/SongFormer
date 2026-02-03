@@ -28,18 +28,18 @@ from musicfm.model.musicfm_25hz import MusicFM25Hz
 from omegaconf import OmegaConf
 from ema_pytorch import EMA
 import importlib
-import math
+
 from dataset.label2id import (
     DATASET_ID_ALLOWED_LABEL_IDS,
     DATASET_LABEL_TO_DATASET_ID,
-    ID_TO_LABEL,
+
 )
 from postprocessing.functional import postprocess_functional_structure
 
 # Constants
 MUSICFM_HOME_PATH = os.path.join("ckpts", "MusicFM")
 INPUT_SAMPLING_RATE = 24000
-AFTER_DOWNSAMPLING_FRAME_RATES = 8.333
+
 DATASET_LABEL = "SongForm-HX-8Class"
 DATASET_IDS = [5]
 TIME_DUR = 420
@@ -368,17 +368,29 @@ def main():
 
     args = parser.parse_args()
 
-    if args.list_devices:
-        list_audio_devices()
-        return
+    try:
+        if args.list_devices:
+            list_audio_devices()
+            return
 
-    # Initialize analyzer
-    analyzer = RealtimeAnalyzer(
-        model_name=args.model, checkpoint=args.checkpoint, config_path=args.config
-    )
+        # Initialize analyzer
+        analyzer = RealtimeAnalyzer(
+            model_name=args.model,
+            checkpoint=args.checkpoint,
+            config_path=args.config,
+        )
 
-    # Start analysis
-    analyzer.start(device_id=args.device)
+        # Start analysis
+        analyzer.start(device_id=args.device)
+    except KeyboardInterrupt:
+        print("\nAnalysis interrupted by user.", file=sys.stderr)
+    except Exception as e:
+        print(f"An error occurred during real-time analysis: {e}", file=sys.stderr)
+        print(
+            "If this appears related to audio input, try running with --list-devices "
+            "and selecting a valid input device.",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

@@ -201,7 +201,7 @@ md5sum ckpts/SongFormer.safetensors
 
 SongFormer now supports **real-time inference** from microphone input! Analyze music structure as it's being played or performed.
 
-See [README_REALTIME.md](README_REALTIME.md) for detailed instructions.
+Detailed real-time inference instructions will be provided in future documentation updates.
 
 Quick start:
 ```bash

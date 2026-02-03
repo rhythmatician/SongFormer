@@ -25,14 +25,14 @@ from musicfm.model.musicfm_25hz import MusicFM25Hz
 from omegaconf import OmegaConf
 from ema_pytorch import EMA
 import importlib
-import math
+
 from dataset.label2id import DATASET_ID_ALLOWED_LABEL_IDS, DATASET_LABEL_TO_DATASET_ID
 from postprocessing.functional import postprocess_functional_structure
 
 # Constants
 MUSICFM_HOME_PATH = os.path.join("ckpts", "MusicFM")
 INPUT_SAMPLING_RATE = 24000
-AFTER_DOWNSAMPLING_FRAME_RATES = 8.333
+
 DATASET_LABEL = "SongForm-HX-8Class"
 DATASET_IDS = [5]
 CHUNK_DURATION = 30  # Analyze in 30-second chunks
@@ -230,7 +230,7 @@ def save_results(results, output_path):
 
         for i in range(len(unique_results) - 1):
             start = unique_results[i][0]
-            end = unique_results[i + 1][0]
+
             label = unique_results[i][1]
             f.write(f"{start:6.1f} {label}\n")
 
@@ -245,59 +245,64 @@ def main():
     """Main entry point"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Simulated real-time music structure analysis from audio file"
-    )
-    parser.add_argument("audio_file", type=str, help="Path to audio file")
-    parser.add_argument("--output", type=str, default=None, help="Output file path")
-    parser.add_argument(
-        "--no-simulate",
-        action="store_true",
-        help="Don't simulate real-time delays (process as fast as possible)",
-    )
+    try:
+        parser = argparse.ArgumentParser(
+            description="Simulated real-time music structure analysis from audio file"
+        )
+        parser.add_argument("audio_file", type=str, help="Path to audio file")
+        parser.add_argument("--output", type=str, default=None, help="Output file path")
+        parser.add_argument(
+            "--no-simulate",
+            action="store_true",
+            help="Don't simulate real-time delays (process as fast as possible)",
+        )
 
-    args = parser.parse_args()
+        args = parser.parse_args()
 
-    # Check if audio file exists
-    if not os.path.exists(args.audio_file):
-        print(f"Error: Audio file not found: {args.audio_file}")
+        # Check if audio file exists
+        if not os.path.exists(args.audio_file):
+            print(f"Error: Audio file not found: {args.audio_file}")
+            return 1
+
+        # Set device
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using device: {device}\n")
+
+        # Load models
+        muq_model, musicfm_model, msa_model, hp, label_mask = load_models(device)
+
+        # Get label mask for dataset
+        dataset_id = DATASET_LABEL_TO_DATASET_ID[DATASET_LABEL]
+        mask = label_mask[dataset_id]
+
+        # Analyze file
+        results = stream_analyze_file(
+            args.audio_file,
+            muq_model,
+            musicfm_model,
+            msa_model,
+            hp,
+            mask,
+            device,
+            simulate_realtime=not args.no_simulate,
+        )
+
+        # Save results
+        if args.output:
+            output_path = args.output
+        else:
+            base_name = Path(args.audio_file).stem
+            output_path = f"{base_name}_realtime_analysis.txt"
+
+        save_results(results, output_path)
+
+        print("\n" + "=" * 60)
+        print("Analysis complete!")
+        print("=" * 60)
+        return 0
+    except Exception as exc:
+        print(f"Error during analysis: {exc}", file=sys.stderr)
         return 1
-
-    # Set device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}\n")
-
-    # Load models
-    muq_model, musicfm_model, msa_model, hp, label_mask = load_models(device)
-
-    # Get label mask for dataset
-    dataset_id = DATASET_LABEL_TO_DATASET_ID[DATASET_LABEL]
-    mask = label_mask[dataset_id]
-
-    # Analyze file
-    results = stream_analyze_file(
-        args.audio_file,
-        muq_model,
-        musicfm_model,
-        msa_model,
-        hp,
-        mask,
-        device,
-        simulate_realtime=not args.no_simulate,
-    )
-
-    # Save results
-    if args.output:
-        output_path = args.output
-    else:
-        base_name = Path(args.audio_file).stem
-        output_path = f"{base_name}_realtime_analysis.txt"
-
-    save_results(results, output_path)
-
-    print("\n" + "=" * 60)
-    print("Analysis complete!")
-    print("=" * 60)
 
 
 if __name__ == "__main__":
