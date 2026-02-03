@@ -1,6 +1,7 @@
 # Core Deep Learning Framework
-torch==2.4.0
-torchaudio==2.4.0
+# Prefer installing torch/torch-directml manually (DirectML/CUDA specific). Use a compatible torch version.
+torch>=2.4.1
+torchaudio>=2.4.1
 lightning==2.5.1.post0
 
 # ML/DL Libraries
@@ -76,7 +77,7 @@ addict==2.4.0
 beartype==0.21.0
 
 # Others
-triton==3.0.0
+# triton==3.0.0  # skipped on Windows (Linux-only)
 muq==0.1.0
 vmo==0.30.5
 

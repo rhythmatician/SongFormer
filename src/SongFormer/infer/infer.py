@@ -115,7 +115,19 @@ def rule_post_processing(msa_list):
 
 def inference(rank, queue_input: mp.Queue, queue_output: mp.Queue, args):
     """Run inference on the input audio"""
-    device = f"cuda:{rank}"
+    # Allow forcing CPU via environment for compatibility (e.g., when DirectML fails)
+    if os.environ.get("SONGFORMER_FORCE_CPU") == "1":
+        device = torch.device("cpu")
+    else:
+        # Prefer DirectML on Windows when CUDA is not available (supports non‑CUDA GPUs)
+        try:
+            import torch_directml
+
+            device = torch_directml.device()
+        except Exception:
+            device = torch.device(
+                f"cuda:{rank}" if torch.cuda.is_available() else "cpu"
+            )
 
     # MuQ model loading (this will automatically fetch the checkpoint from huggingface)
     muq = MuQ.from_pretrained("OpenMuQ/MuQ-large-msd-iter")

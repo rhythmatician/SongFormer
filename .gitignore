@@ -52,3 +52,17 @@ cython_debug/
 *.swp
 
 .ruff_cache/
+
+# SCP files
+*.scp
+
+# Output directories
+outputs/*
+
+# Generated model checkpoints
+ckpts/MusicFM/msd_stats.json
+ckpts/MusicFM/pretrained_msd.pt
+src/SongFormer/ckpts/SongFormer.safetensors
+src/SongFormer/ckpts/MusicFM/msd_stats.json
+src/SongFormer/ckpts/MusicFM/pretrained_msd.pt
+ckpts/SongFormer.safetensors
