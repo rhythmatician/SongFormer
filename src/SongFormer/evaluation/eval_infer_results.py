@@ -1,6 +1,7 @@
 # monkey patch to fix issues in msaf
 import scipy
 import numpy as np
+
 scipy.inf = np.inf
 
 import argparse
@@ -77,7 +78,7 @@ def main():
     argparser.add_argument("--ann_dir", type=str, required=True)
     argparser.add_argument("--est_dir", type=str, required=True)
     argparser.add_argument("--output_dir", type=str, default="./eval_infer_results")
-    argparser.add_argument("--prechorus2what", type=str, default=None)
+    argparser.add_argument("--prechorus2what", type=str, default="pre-chorus")
     argparser.add_argument("--armerge_continuous_segments", action="store_true")
     args = argparser.parse_args()
 
